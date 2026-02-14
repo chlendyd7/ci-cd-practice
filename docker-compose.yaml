@@ -1,0 +1,22 @@
+version: '3'
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root  # 도커 안에서 도커를 사용하거나 권한 문제를 피하기 위해 root 권한 부여
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock # Jenkins 안에서 Docker 명령어를 쓰기 위함
+    restart: always
+    environment:
+      # - JAVA_OPTS=-Xmx2048m -Xms512m  # 최대 2GB, 최소 512MB 할당
+      # 최대 8GB(8192m), 시작 2GB(2048m)로 상향 조정
+      - JAVA_OPTS=-Xmx8192m -Xms2048m
+    deploy:
+      resources:
+        limits:
+          cpus: '4'      # CPU 코어 4개까지 허용
+          memory: 8192M  # 메모리 제한 8GB
