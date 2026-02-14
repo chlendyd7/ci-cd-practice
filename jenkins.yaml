@@ -1,0 +1,54 @@
+jenkins:
+  systemMessage: "32GB SSAFY 서버 - 보안 자동화 설정 가동 중 🚀"
+  
+  # 관리자 계정 설정 (환경 변수 사용)
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  # 권한 설정: 관리자에게 모든 권한 부여
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:${JENKINS_ADMIN_ID}"
+        - "Overall/Read:authenticated"
+
+  # GitLab 인증 정보 (Credentials) 자동 등록
+  credentials:
+    system:
+      domainCredentials:
+        - credentials:
+            - usernamePassword:
+                scope: GLOBAL
+                id: "gitlab-auth" # Jenkinsfile에서 사용할 ID
+                username: "${GITLAB_USERNAME}"
+                password: "${GITLAB_TOKEN}" # .env의 토큰이 여기 주입됨
+                description: "GitLab Private Token for Project"
+
+# 프로젝트(Job) 자동 생성
+jobs:
+  - script: >
+      pipelineJob('S14P11B201-Main-Pipeline') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://lab.ssafy.com/s14-webmobile3-sub1/S14P11B201.git')
+                  credentials('gitlab-auth')
+                }
+                branches('master')
+              }
+            }
+            scriptPath('Jenkinsfile') # 프로젝트 루트의 Jenkinsfile 읽기
+          }
+        }
+      }
+
+# Mattermost 알림 설정 (필요 시 플러그인 설정 추가)
+unclassified:
+  mattermostnotifier:
+    endpoint: "${MM_WEBHOOK_URL}"
