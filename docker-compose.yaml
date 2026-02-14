@@ -1,22 +1,16 @@
-version: '3'
 services:
   jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
-    user: root  # 도커 안에서 도커를 사용하거나 권한 문제를 피하기 위해 root 권한 부여
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    volumes:
-      - ./jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock # Jenkins 안에서 Docker 명령어를 쓰기 위함
+    build: . # Dockerfile을 읽어서 커스텀 이미지를 만듭니다.
+    container_name: jenkins-server
     restart: always
+    ports:
+      - "8080:8080" # 웹 UI 접속용
+      - "50000:50000" # 에이전트 통신용
+    env_file:
+      - .env # 1단계에서 만든 비밀 변수 파일 로드
+    volumes:
+      - ./jenkins_home:/var/jenkins_home # 데이터 보존
+      - ./jenkins.yaml:/var/jenkins_home/jenkins.yaml # JCasC 설정 파일 주입
     environment:
-      # - JAVA_OPTS=-Xmx2048m -Xms512m  # 최대 2GB, 최소 512MB 할당
-      # 최대 8GB(8192m), 시작 2GB(2048m)로 상향 조정
-      - JAVA_OPTS=-Xmx8192m -Xms2048m
-    deploy:
-      resources:
-        limits:
-          cpus: '4'      # CPU 코어 4개까지 허용
-          memory: 8192M  # 메모리 제한 8GB
+      # 젠킨스에게 JCasC 설정 파일 위치를 알려줍니다.
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yaml
