@@ -27,6 +27,9 @@ jenkins:
                 username: "${GITLAB_USERNAME}"
                 password: "${GITLAB_TOKEN}" # .env의 토큰이 여기 주입됨
                 description: "GitLab Private Token for Project"
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: true # 프록시나 컨테이너 환경에서 호출할 때 필수
 
 # 프로젝트(Job) 자동 생성
 jobs:
@@ -52,3 +55,9 @@ jobs:
 unclassified:
   mattermostnotifier:
     endpoint: "${MM_WEBHOOK_URL}"
+  gitLabConnectionConfig:
+    connections:
+      - name: "GitLab"
+        url: "https://lab.ssafy.com"
+        apiTokenId: "gitlab-auth" # credentials에 등록한 ID와 일치해야 함
+        useAuthenticatedPostReceiveRoute: true # 이 옵션이 403 에러를 방지하는 핵심입니다!
