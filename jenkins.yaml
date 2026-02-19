@@ -12,24 +12,31 @@ jenkins:
   # 권한 설정: 관리자에게 모든 권한 부여
   authorizationStrategy:
     globalMatrix:
-      permissions:
-        - "Overall/Administer:${JENKINS_ADMIN_ID}"
-        - "Overall/Read:authenticated"
+      entries:
+        - user:
+            name: "${JENKINS_ADMIN_ID}"
+            permissions:
+              - "Overall/Administer"
+        - group:
+            name: "authenticated"
+            permissions:
+              - "Overall/Read"
 
-  # GitLab 인증 정보 (Credentials) 자동 등록
-  credentials:
-    system:
-      domainCredentials:
-        - credentials:
-            - usernamePassword:
-                scope: GLOBAL
-                id: "gitlab-auth" # Jenkinsfile에서 사용할 ID
-                username: "${GITLAB_USERNAME}"
-                password: "${GITLAB_TOKEN}" # .env의 토큰이 여기 주입됨
-                description: "GitLab Private Token for Project"
   crumbIssuer:
     standard:
       excludeClientIPFromCrumb: true # 프록시나 컨테이너 환경에서 호출할 때 필수
+
+# GitLab 인증 정보 (Credentials) 자동 등록
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "gitlab-auth" # Jenkinsfile에서 사용할 ID
+              username: "${GITLAB_USERNAME}"
+              password: "${GITLAB_TOKEN}" # .env의 토큰이 여기 주입됨
+              description: "GitLab Private Token for Project"
 
 # 프로젝트(Job) 자동 생성
 jobs:
@@ -46,7 +53,7 @@ jobs:
                 branches('master')
               }
             }
-            scriptPath('Jenkinsfile') # 프로젝트 루트의 Jenkinsfile 읽기
+            scriptPath('Jenkinsfile') // 프로젝트 루트의 Jenkinsfile 읽기
           }
         }
       }
@@ -60,4 +67,5 @@ unclassified:
       - name: "GitLab"
         url: "https://lab.ssafy.com"
         apiTokenId: "gitlab-auth" # credentials에 등록한 ID와 일치해야 함
-        useAuthenticatedPostReceiveRoute: true # 이 옵션이 403 에러를 방지하는 핵심입니다!
+        clientBuilderId: "autodetect" # 이 행을 추가하여 null 에러 해결
+        # useAuthenticatedPostReceiveRoute 속성은 지원되지 않아 제거되었습니다.

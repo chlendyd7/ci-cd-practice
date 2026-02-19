@@ -1,6 +1,7 @@
 services:
   jenkins:
     build: . # Dockerfile을 읽어서 커스텀 이미지를 만듭니다.
+    user: root
     container_name: jenkins-server
     restart: always
     ports:
@@ -9,6 +10,7 @@ services:
     env_file:
       - .env # 1단계에서 만든 비밀 변수 파일 로드
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # 호스트 도커 소켓 공유
       - ./jenkins_home:/var/jenkins_home # 데이터 보존
       - ./jenkins.yaml:/var/jenkins_home/jenkins.yaml # JCasC 설정 파일 주입
     environment:
