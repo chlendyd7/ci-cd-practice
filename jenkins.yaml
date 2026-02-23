@@ -37,6 +37,17 @@ credentials:
               username: "${GITLAB_USERNAME}"
               password: "${GITLAB_TOKEN}" # .env의 토큰이 여기 주입됨
               description: "GitLab Private Token for Project"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-hub-credentials"
+              username: "${DOCKER_HUB_ID}"
+              password: "${DOCKER_HUB_PASSWORD}"
+              description: "Docker Hub Credentials"
+          - string:
+              scope: GLOBAL
+              id: "k8s-kubeconfig"
+              secret: "${KUBECONFIG_CONTENT}"
+              description: "K8s Kubeconfig Content"
 
 # 프로젝트(Job) 자동 생성
 jobs:

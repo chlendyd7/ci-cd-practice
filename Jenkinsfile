@@ -1,10 +1,49 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_HUB_ID = "${env.DOCKER_HUB_ID}" // .env 파일의 값을 참조
+        APP_NAME = 's14p11b201-app'
+        IMAGE_NAME = "${DOCKER_HUB_ID}/${APP_NAME}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        K8S_CREDENTIAL_ID = 'k8s-kubeconfig' // Jenkins에 등록된 Kubeconfig ID
+        DOCKER_HUB_CREDENTIAL_ID = 'docker-hub-credentials' // Jenkins에 등록된 Docker Hub 자격 증명 ID
+    }
+
     stages {
-        stage('Hello') {
+        stage('Checkout') {
             steps {
-                echo 'Building...'
+                checkout scm
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    // Docker 이미지 빌드 및 푸시
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIAL_ID) {
+                        def appImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                        appImage.push()
+                        appImage.push("latest")
+                    }
+                }
+            }
+        }
+
+        stage('K8s Deployment') {
+            steps {
+                script {
+                    // Secret Text로 저장된 kubeconfig 내용을 가져와서 임시 파일로 저장
+                    withCredentials([string(credentialsId: 'k8s-kubeconfig', variable: 'KUBE_CONTENT')]) {
+                        writeFile file: 'kubeconfig', text: KUBE_CONTENT
+                        sh """
+                            export KUBECONFIG=kubeconfig
+                            sed -i 's|\${DOCKER_IMAGE}|${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml
+                            kubectl apply -f k8s/deployment.yaml
+                            rm kubeconfig
+                        """
+                    }
+                }
             }
         }
     }

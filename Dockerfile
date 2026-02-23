@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Docker CLI 설치
+# 2. Docker CLI 및 kubectl 설치
 RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
 RUN usermod -aG docker jenkins
 
 # 3. 젠킨스 플러그인 설치
@@ -23,6 +26,9 @@ RUN jenkins-plugin-cli --plugins \
     matrix-auth \
     mattermost \
     job-dsl \
-    gitlab-plugin
+    gitlab-plugin \
+    docker-workflow \
+    kubernetes-cli \
+    kubernetes
 
 USER jenkins
